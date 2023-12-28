@@ -1,6 +1,7 @@
-from Note import Note   
+import json
+from note import Note
 
-note = Note()
+file_name = 'notes.json'
         
 def add_note(title, body):
     new_note = Note()
@@ -8,75 +9,120 @@ def add_note(title, body):
     new_note.set_title(title)
     new_note.set_body(body)
     new_note.set_date()
-    with open('notes.json', 'a', encoding='utf-8') as file:
-        file.write(f'{new_note.id} {new_note.title} {new_note.body} {new_note.date}\n\n')
+    note_data = {
+        'ID': new_note.id,
+        'Title': new_note.title,
+        'Note': new_note.body,
+        'Date and time': new_note.date
+        }
+    try:
+        save(note_data)
+    except:
+        print("Не удалось записать заметку")
+    
+def save(note_data):
+    data = get_notes()
+    data.append(note_data)
+    with open(file_name, 'w') as file:
+        file.write(json.dumps(data, indent=4))
+
+def save_all(data):
+    new_data = []
+    for item in data:
+        note_data = {
+            'ID': item.id,
+            'Title': item.title,
+            'Note': item.body,
+            'Date and time': item.date
+            }
+        new_data.append(note_data)
+    with open(file_name, 'w') as file:
+        file.write(json.dumps(new_data, indent=4))
+    
+def get_notes():
+    try:
+        with open(file_name, 'r') as file:
+            data = json.load(file)
+    except:
+        data = []
+    return data
+    
+def load():
+    try:
+        with open(file_name, 'r') as file:
+            data = json.load(file)
+        notes = []
+        for elem in data:
+            note = Note()
+            note.id = elem.get('ID')
+            note.title = elem.get('Title')
+            note.body = elem.get('Note')
+            note.date = elem.get('Date and time')
+            notes.append(note)
+        return notes
+    except:
+        return []
+
+def print_data():
+    data = load()
+    for item in data:
+        print_note(item)
 
 def print_note(item):
     print('')
     print(item)
     print('')
-            
-def print_data():
-    with open('notes.json', 'r', encoding='utf-8') as file:
-        to_print = file.read().strip().split('\n\n')
-        for item in to_print:
-            print_note(item)
         
-def search_note(index, to_search):
-    with open('notes.json', 'r', encoding='utf-8') as file:
-        data = file.read().strip().split('\n\n')
-        flag = True
-        for item in data:
-            new_item = item.split()
-            if to_search == new_item[index]:
-                print_note(item)
-                flag = False
-        if flag: print(f'\nИнформация не найдена\n')
+def search_note(to_search):
+    data = load()
+    flag = True
+    for item in data:
+        if to_search == item.id or to_search == item.title:
+            print_note(item)
+            flag = False
+    if flag: print(f'\nИнформация не найдена\n')
                 
 def change_note(to_search, new_info, index):
-    with open('notes.json', 'r', encoding='utf-8') as file:
-        data = file.read().strip().split('\n\n')
-    with open('notes.json', 'w', encoding='utf-8') as file:
-        flag = True
-        for item in data:
-            new_item = item.split()
-            if to_search == new_item[0] or to_search == new_item[1]:
-            # if to_search in item:
-                new_item[index] = new_info
-                new_note = Note()
-                new_note.id = new_item[0]
-                new_note.title = new_item[1]
-                new_note.body = new_item[2]
-                new_note.set_date()
-                flag = False
-                file.write(f'{new_note.id} {new_note.title} {new_note.body} {new_note.date}\n\n')
-            else:
-                file.write(f'{new_item[0]} {new_item[1]} {new_item[2]} {new_item[3]} {new_item[4]}\n\n')
-        if flag: print(f'\nИнформация не найдена\n')
+    data = load()
+    flag = True
+    for item in data:
+        if to_search == item.id or to_search == item.title:
+            match index:
+                case 0:
+                    item.id = new_info
+                case 1:
+                    item.title = new_info
+                case 2:
+                    item.body = new_info
+            item.set_date()
+            print_note(item)
+            flag = False
+    save_all(data)
+    if flag: print(f'\nИнформация не найдена\n')
         
 def delete_note(to_search, choose, index):
-    with open('notes.json', 'r', encoding='utf-8') as file:
-        data = file.read().strip().split('\n\n')
-    with open('notes.json', 'w', encoding='utf-8') as file:
-        if choose == 1:
-            flag = True
-            for item in data:
-                new_item = item.split()
-                if to_search == new_item[0] or to_search == new_item[1]:
-                    flag = False
-                else:
-                    item = ' '.join(new_item)
-                    file.write(f'{item}\n\n')
-            if flag: print(f'\nИнформация не найдена\n')
-            
-        if choose == 2:
-            flag = True
-            for item in data:
-                new_item = item.split()
-                if to_search == new_item[0] or to_search == new_item[1]:
-                    new_item[index] = '-----'
-                    print_note(' '.join(new_item))
-                    flag = False
-                item = ' '.join(new_item)
-                file.write(f'{item}\n\n')
-            if flag: print(f'\nИнформация не найдена\n')
+    data = load()
+    if choose == 1:
+        flag = True
+        for item in data:
+            if to_search == item.id or to_search == item.title:
+                flag = False
+                data.remove(item)
+        save_all(data)
+        if flag: print(f'\nИнформация не найдена\n')
+        
+    if choose == 2:
+        flag = True
+        for item in data:
+            if to_search == item.id or to_search == item.title:
+                match index:
+                    case 0:
+                        item.id = '--'
+                    case 1:
+                        item.title = '-----'
+                    case 2:
+                        item.body = '-----------'
+                item.set_date()
+                flag = False
+        save_all(data)
+        if flag: print(f'\nИнформация не найдена\n')

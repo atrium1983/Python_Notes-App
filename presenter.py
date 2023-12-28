@@ -1,19 +1,17 @@
 import model
 import view
-
     
-def add_note():
+def add_note(self):
     title = view.ask_info('Введите название заметки: ')
     body = view.ask_info('Введите текст заметки: ')
-    model.add_note(title, body)
+    self.model.add_note(title, body)
     
 def print_data():
     model.print_data()
     
 def search_note():
-    index = view.create_request('Выберите вариант поиска')
-    to_search = view.ask_info('Введите данные для поиска: ')
-    model.search_note(index, to_search)
+    to_search = view.ask_info('Введите id или название заметки: ')
+    model.search_note(to_search)
     
 def change_note():
     to_search = view.ask_info('Введите id или название заметки: ')
